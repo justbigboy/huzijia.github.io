@@ -1,0 +1,513 @@
+<!doctype html>
+<html>
+<head>
+<!--HTML文字波浪形前进的效果-->
+<style>
+
+</style>
+<script>
+	
+function run(){
+	var ima=document.getElementById("ima");
+	var file=ima.files[0];
+	var temp=window.URL.createObjectURL(file);
+	var kk=document.getElementsByTagName("INPUT");
+	var flag=Number(kk[0]);
+	var TH=Number(kk[1]);
+	var TL=Number(kk[2]);
+	var sp1=document.createElement("DIV");
+	sp1.innerHTML="<p>输入图像：</p><p><img src="+"\""+temp+"\"></p>";
+	document.body.insertBefore(sp1,myCan);
+	var img = new Image(); 
+    img.src = temp;
+    img.onload = function() {
+    draw(this,TH,TL,flag);
+};	
+}
+	function draw(img,TH,TL,flag){
+	var myCan=document.getElementById("myCan");
+	var con=myCan.getContext("2d");
+	myCan.width=img.width;
+	myCan.height=img.height;
+	con.drawImage(img,0,0);
+    img.style.display = 'none';
+	var imageData = con.getImageData(0,0,myCan.width, myCan.height);
+    var data = imageData.data;
+	var w = imageData.width;
+	var h = imageData.height;
+	var angle=new Array((h-1)*(w-1));
+	huidu(flag);
+	//erzhi();
+	//fushi(15);
+	//gauss(10);
+	//tidujisuan(angle);
+    //yizhi(angle);
+	//shuangfazhi(TH,TL);
+	//quhu();
+	}
+function huidu(flag){
+	var myCan=document.getElementById("myCan");
+	var con=myCan.getContext("2d");
+	var imageData = con.getImageData(0,0,myCan.width, myCan.height);
+    var data = imageData.data;
+	for(var i=0;i<data.length;i+=4){
+		var R=data[i];
+		var G=data[i+1];
+		var B=data[i+2];
+		var Alpha=data[i+3];
+		//var gray=R*0.299+G*0.587+B*0.144;
+		var gray=(R+G+B)/3;
+		gray=Math.round(gray);
+		data[i]=gray;
+		data[i+1]=gray;
+		data[i+2]=gray;
+		data[i+3]=Alpha;
+	}
+	con.putImageData(imageData, 0, 0);
+	var temp=myCan.toDataURL();
+	var sp1=document.createElement("DIV");
+	sp1.innerHTML="<p>输出灰度图像：</p><p><img src="+"\""+temp+"\"></p>";
+	document.body.insertBefore(sp1,myCan);
+}
+function erzhi(){
+	var myCan=document.getElementById("myCan");
+	var con=myCan.getContext("2d");
+	var imageData = con.getImageData(0,0,myCan.width, myCan.height);
+    var data = imageData.data;
+	var output = con.createImageData(myCan.width, myCan.height);
+	var Odata=output.data;
+	var w = imageData.width;
+	var h = imageData.height;
+	var Tsum=0;
+	var Tsum1=0;
+	var Tsum2=0;
+	var T=0;
+	var Tnew=0;
+	var num=0;
+	var num1=0;
+	var num2=0;
+	var count=0;
+	for (var y = 1; y < h-1; y += 1) {
+       for (var x = 1; x < w-1; x += 1){
+		    var i = (y*w + x)*4;
+		   Tsum=data[i]+Tsum;
+		   num++;
+	   }
+	   }
+	T=Tsum/num;
+	while((T-Tnew)>1&&count<1000){
+		if(Tnew!=0){
+			T=Tnew;
+		}
+		Tsum1=0;
+		Tsum2=0;
+		num1=0;
+		num2=0;
+		for (var y = 1; y < h-1; y += 1){
+       for (var x = 1; x < w-1; x += 1){
+		    var i = (y*w + x)*4;
+		   if(data[i]>=T){
+			   num1=num1+1;
+		       Tsum1=data[i]+Tsum1;
+		   }
+		   else{
+			   num2=num2+1;
+		       Tsum2=data[i]+Tsum2;
+		   }
+	   }
+	   }
+	Tsum1=Tsum1/num1;
+	Tsum2=Tsum2/num1;
+	Tnew=(Tsum1+Tsum2)/2;
+	count++;
+	}
+	for (var y = 1; y < h-1; y += 1) {
+       for (var x = 1; x < w-1; x += 1){
+		    var i = (y*w + x)*4;
+		    if(data[i]>=Tnew){
+				data[i]=255;
+			}
+		   else{
+			   data[i]=0;
+		   }
+		 data[i+1]=data[i];
+		 data[i+2]=data[i];  
+         data[i+3] = 255; // alpha
+	   }
+	}
+	con.putImageData(imageData, 0, 0);
+	var temp=myCan.toDataURL();
+	var sp1=document.createElement("DIV");
+	sp1.innerHTML="<p>输出二值化图像：</p><p><img src="+"\""+temp+"\"></p>";
+	document.body.insertBefore(sp1,myCan);
+	}
+function fushi(size){
+	var myCan=document.getElementById("myCan");
+	var con=myCan.getContext("2d");
+	var imageData = con.getImageData(0,0,myCan.width, myCan.height);
+    var data = imageData.data;
+	var output = con.createImageData(myCan.width, myCan.height);
+	var Odata=output.data;
+	var w = imageData.width;
+	var h = imageData.height;
+	for (var y = (size-1)/2; y < h-(size-1)/2; y += 1) {
+       for (var x =(size-1)/2; x < w-(size-1)/2; x += 1){
+         var i = (y*w + x)*4;
+		 var tem=255;
+         for(var o=(1-size)/2;o<=(size-1)/2;o++){
+			 for(var p=(1-size)/2;p<=(size-1)/2;p++){
+				 var j=((y+o)*w+x+p)*4;
+				 if(data[j]<tem){
+					 tem=data[j];
+				 }
+			 }
+		 }
+		 Odata[i]=tem;
+		 Odata[i+1]=Odata[i];
+		 Odata[i+2]=Odata[i];  
+         Odata[i+3] = 255; // alpha
+		 }
+       }
+	con.putImageData(output, 0, 0);
+	var temp=myCan.toDataURL();
+	var sp1=document.createElement("DIV");
+	sp1.innerHTML="<p>输出腐蚀图像：</p><p><img src="+"\""+temp+"\"></p>";
+	document.body.insertBefore(sp1,myCan);
+}
+function gauss(radius){
+	var myCan=document.getElementById("myCan");
+	var con=myCan.getContext("2d");
+	var imageData = con.getImageData(0,0,myCan.width, myCan.height);
+    var data = imageData.data;
+	var output = con.createImageData(myCan.width, myCan.height);
+	var Odata=output.data;
+	var w = imageData.width;
+	var h = imageData.height;
+	var quan=new Array(9);
+	var g_w=2;
+	var g_h=2;
+	var k=0;
+	var part1=1/(2*Math.PI*Math.pow(radius,2));
+	var part2=1/(2*Math.pow(radius,2));
+	var sum=0;
+	for(var i=-1;i<g_h;i++){
+		for(var j=-1;j<g_w;j++){
+			var part3=-(Math.pow(i,2)+Math.pow(j,2))*part2;
+			quan[k]=part1*Math.pow(Math.E,part3);
+			k++;
+		}
+	}
+	for(var i=0;i<quan.length;i++){
+		sum=quan[i]+sum;
+	}
+	for(var i=0;i<quan.length;i++){
+		quan[i]=quan[i]/sum;
+	}
+	for (var y = 1; y < h-1; y += 1) {
+       for (var x = 1; x < w-1; x += 1) {
+         var i = (y*w + x)*4;
+          Odata[i]=data[(w*(y-1)+x-1)*4]*quan[0]+data[(w*(y-1)+x)*4]*quan[1]+data[(w*(y-1)+x+1)*4]*quan[2]+data[i-4]*quan[3]+data[i]*quan[4]+data[i+4]*quan[5]+
+			 data[(w*(y+1)+x-1)*4]*quan[6]+data[(w*(y+1)+x)*4]*quan[7]+data[(w*(y+1)+x+1)*4]*quan[8];
+		 Odata[i+1]=Odata[i];
+		 Odata[i+2]=Odata[i];  
+         Odata[i+3] = 255; // alpha
+       }
+	}
+	for(var z=0;z<w;z++){
+		 var i=z*4;
+		 Odata[i]=data[i];
+		 Odata[i+1]=Odata[i];
+		 Odata[i+2]=Odata[i];  
+         Odata[i+3] = 255; // alpha
+	}
+	for(var g=0;g<w;g++){
+		 var i=((h-1)*w+g)*4;
+		 Odata[i]=data[i];
+		 Odata[i+1]=Odata[i];
+		 Odata[i+2]=Odata[i];  
+         Odata[i+3] = 255; // alpha
+	}
+	for(var v=0;v<h;v++){
+		 var i=v*w*4;
+		 Odata[i]=data[i];
+		 Odata[i+1]=Odata[i];
+		 Odata[i+2]=Odata[i];  
+         Odata[i+3] = 255; // alpha
+	}
+	for(var o=0;o<h;o++){
+		 var i=(o*w+w-1)*4;
+		 Odata[i]=data[i];
+		 Odata[i+1]=Odata[i];
+		 Odata[i+2]=Odata[i];  
+         Odata[i+3] = 255; // alpha
+	}
+	con.putImageData(output, 0, 0);
+	var temp=myCan.toDataURL();
+	var sp1=document.createElement("DIV");
+	sp1.innerHTML="<p>输出高斯模糊图像：</p><p><img src="+"\""+temp+"\"></p>";
+	document.body.insertBefore(sp1,myCan);
+}
+function tidujisuan(angle){
+	var myCan=document.getElementById("myCan");
+	var con=myCan.getContext("2d");
+	var imageData = con.getImageData(0,0,myCan.width, myCan.height);
+    var data = imageData.data;
+	var output = con.createImageData(myCan.width, myCan.height);
+	var Odata=output.data;
+	var w = imageData.width;
+	var h = imageData.height;
+	var output2 = con.createImageData(myCan.width, myCan.height);
+	var Odata2=output2.data;
+	for (var y = 1; y < h-1; y += 1) {
+       for (var x = 1; x < w-1; x += 1){
+         var i = (y*w + x)*4;
+		   var g_x=-data[(w*(y-1)+x-1)*4]+data[(w*(y-1)+x+1)*4]-2*data[i-4]+2*data[i+4]-data[(w*(y+1)+x-1)*4]+data[(w*(y+1)+x+1)*4];
+		   var g_y=-data[(w*(y-1)+x-1)*4]-2*data[(w*(y-1)+x)*4]-data[(w*(y-1)+x+1)*4]+data[(w*(y+1)+x-1)*4]+2*data[(w*(y+1)+x)*4]+data[(w*(y+1)+x+1)*4];
+          var sqr=Math.pow(g_x,2)+Math.pow(g_y,2);
+		 angle[x*y]=g_y/g_x;
+		  sqr=Math.sqrt(sqr);
+		   sqr=Math.round(sqr);
+		   if(sqr>255){
+			   sqr=255;
+		   }
+		 Odata2[i]=sqr;
+		 Odata2[i+1]=Odata2[i];
+		 Odata2[i+2]=Odata2[i];  
+         Odata2[i+3] = 255; // alpha
+       }
+     }
+	for(var z=0;z<w;z++){
+		 var i=z*4;
+		 Odata2[i]=0;
+		 Odata2[i+1]=Odata[i];
+		 Odata2[i+2]=Odata[i];  
+         Odata2[i+3] = 255; // alpha
+	}
+	for(var g=0;g<w;g++){
+		 var i=((h-1)*w+g)*4;
+		 Odata2[i]=0;
+		 Odata2[i+1]=Odata[i];
+		 Odata2[i+2]=Odata[i];  
+         Odata2[i+3] = 255; // alpha
+	}
+	for(var v=0;v<h;v++){
+		 var i=v*w*4;
+		 Odata2[i]=0;
+		 Odata2[i+1]=Odata[i];
+		 Odata2[i+2]=Odata[i];  
+         Odata2[i+3] = 255; // alpha
+	}
+	for(var o=0;o<h;o++){
+		 var i=(o*w+w-1)*4;
+		 Odata2[i]=0;
+		 Odata2[i+1]=Odata[i];
+		 Odata2[i+2]=Odata[i];  
+         Odata2[i+3] = 255; // alpha
+	}
+	con.putImageData(output2, 0, 0);
+	var temp=myCan.toDataURL();
+	var sp1=document.createElement("DIV");
+	sp1.innerHTML="<p>输出梯度计算图像：</p><p><img src="+"\""+temp+"\"></p>";
+	document.body.insertBefore(sp1,myCan);
+}
+function yizhi(angle){
+	var myCan=document.getElementById("myCan");
+	var con=myCan.getContext("2d");
+	var imageData = con.getImageData(0,0,myCan.width, myCan.height);
+    var data = imageData.data;
+	var output = con.createImageData(myCan.width, myCan.height);
+	var Odata=output.data;
+	var w = imageData.width;
+	var h = imageData.height;
+    var output3 = con.createImageData(myCan.width, myCan.height);
+	var Odata3=output3.data;
+	for (var y = 1; y < h-1; y += 1) {
+       for (var x = 1; x < w-1; x += 1) {
+         var i = (y*w + x)*4;
+		 var temp1=0;
+		 var temp2=0;
+		 var weight=Math.abs(angle[x*y]);
+		   if(Math.abs(angle[x*y])>=1){
+			   if(angle[x*y]>=0){
+				 temp1=weight*data[(w*(y-1)+x-1)*4]+(1-weight)*data[(w*(y-1)+x)*4];
+				 temp2=weight*data[(w*(y+1)+x+1)*4]+(1-weight)*data[(w*(y+1)+x)*4];
+			   }
+			   else{
+				 temp1=weight*data[(w*(y-1)+x+1)*4]+(1-weight)*data[(w*(y-1)+x)*4];
+				 temp2=weight*data[(w*(y+1)+x-1)*4]+(1-weight)*data[(w*(y+1)+x)*4]; 
+			   }
+		   }
+		   else{
+			   if(angle[x*y]>=0){
+				 temp1=weight*data[(w*(y+1)+x-1)*4]+(1-weight)*data[i-4];
+				 temp2=weight*data[(w*(y-1)+x+1)*4]+(1-weight)*data[i+4]; 
+			   }
+			   else{
+				 temp1=weight*data[(w*(y-1)+x-1)*4]+(1-weight)*data[i-4];
+				 temp2=weight*data[(w*(y+1)+x+1)*4]+(1-weight)*data[i+4]; 
+			   }
+		   }
+		   if(data[i]>=temp1&&data[i]>=temp2){
+			   Odata3[i]=data[i];
+		   }
+		   else{
+			   Odata3[i]=0;
+		   }
+		 Odata3[i+1]=Odata3[i];
+		 Odata3[i+2]=Odata3[i];  
+         Odata3[i+3] = 255; // alpha
+       }
+     }
+	for(var z=0;z<w;z++){
+		 var i=z*4;
+		 Odata3[i]=0;
+		 Odata3[i+1]=Odata[i];
+		 Odata3[i+2]=Odata[i];  
+         Odata3[i+3] = 255; // alpha
+	}
+	for(var g=0;g<w;g++){
+		 var i=((h-1)*w+g)*4;
+		 Odata3[i]=0;
+		 Odata3[i+1]=Odata[i];
+		 Odata3[i+2]=Odata[i];  
+         Odata3[i+3] = 255; // alpha
+	}
+	for(var v=0;v<h;v++){
+		 var i=v*w*4;
+		 Odata3[i]=0;
+		 Odata3[i+1]=Odata[i];
+		 Odata3[i+2]=Odata[i];  
+         Odata3[i+3] = 255; // alpha
+	}
+	for(var o=0;o<h;o++){
+		 var i=(o*w+w-1)*4;
+		 Odata3[i]=0;
+		 Odata3[i+1]=Odata[i];
+		 Odata3[i+2]=Odata[i];  
+         Odata3[i+3] = 255; // alpha
+	}
+	con.putImageData(output3, 0, 0);
+	var temp=myCan.toDataURL();
+	var sp1=document.createElement("DIV");
+	sp1.innerHTML="<p>输出非极大值抑制图像：</p><p><img src="+"\""+temp+"\"></p>";
+	document.body.insertBefore(sp1,myCan);
+}
+function shuangfazhi(high,low){
+	var myCan=document.getElementById("myCan");
+	var con=myCan.getContext("2d");
+	var imageData = con.getImageData(0,0,myCan.width, myCan.height);
+    var data = imageData.data;
+	var output = con.createImageData(myCan.width, myCan.height);
+	var Odata=output.data;
+	var w = imageData.width;
+	var h = imageData.height;
+	for (var y = 1; y < h-1; y += 1) {
+       for (var x = 1; x < w-1; x += 1) {
+         var i = (y*w + x)*4;
+          if(data[i]>=220){
+			  data[i]=255;
+		  }
+		   if(data[i]<220&&data[i]>=100){
+			  data[i]=220;
+		  }
+		  if(data[i]<100){
+			  data[i]=0;
+		  }
+		 data[i+1]=data[i];
+		 data[i+2]=data[i];  
+         data[i+3] = 255; // alpha
+       }
+	}
+	for (var y = 1; y < h-1; y += 1) {
+       for (var x = 1; x < w-1; x += 1) {
+         var i = (y*w + x)*4;
+		 if(data[i]==220){
+		 var tem=0;
+         for(var o=-1;o<2;o++){
+			 for(var p=-1;p<2;p++){
+				 var j=((y+o)*w+x+p)*4;
+				 if(data[j]==255){
+					 tem=1;
+				 }
+			 }
+		 }
+		 if(tem==0){
+			 Odata[i]=0;
+		 }
+		 else{
+			 Odata[i]=255;
+		 }
+		 }
+		  else{
+			  Odata[i]=data[i];
+		  }
+		 Odata[i+1]=Odata[i];
+		 Odata[i+2]=Odata[i];  
+         Odata[i+3] = 255; // alpha
+       }
+	}
+	con.putImageData(output,0, 0);
+	var temp=myCan.toDataURL();
+	var sp1=document.createElement("DIV");
+	sp1.innerHTML="<p>输出双阀值检测图像：</p><p><img src="+"\""+temp+"\"></p>";
+	document.body.insertBefore(sp1,myCan);
+}
+function quhu2(){
+	
+	
+}
+function quhu(){
+	var myCan=document.getElementById("myCan");
+	var con=myCan.getContext("2d");
+	var imageData = con.getImageData(0,0,myCan.width, myCan.height);
+    var data = imageData.data;
+	var output = con.createImageData(myCan.width, myCan.height);
+	var Odata=output.data;
+	var w = imageData.width;
+	var h = imageData.height;
+	for (var y = 1; y < h-1; y += 1) {
+       for (var x = 1; x < w-1; x += 1) {
+         var i = (y*w + x)*4;
+		   if(data[i]==255){
+			   if(data[i+4]==255&&data[i+8]==255&&data[i+12]==255){
+				   
+			   }
+			   else{
+				   data[i]=0;
+				   data[i+1]=0;
+				   data[i+2]=0;
+				   data[i+3]=255;
+				    data[i+4]=0;
+				   data[i+5]=0;
+				   data[i+6]=0;
+				   data[i+7]=255;
+				    data[i+8]=0;
+				   data[i+9]=0;
+				   data[i+10]=0;
+				   data[i+11]=255;
+				   /*data[i+12]=0;
+				   data[i+13]=0;
+				   data[i+14]=0;
+				   data[i+15]=255;*/
+			   }
+			   x=x+2;
+		   }
+	   }
+		   }
+	con.putImageData(imageData,0, 0);
+	var temp=myCan.toDataURL();
+	var sp1=document.createElement("DIV");
+	sp1.innerHTML="<p>输出去弧图像：</p><p><img src="+"\""+temp+"\"></p>";
+	document.body.insertBefore(sp1,myCan);
+}
+		 
+</script>
+<meta charset="UTF-8">
+</head>
+<body>
+高通滤波阀值：<input type="text" placeholder="范围0~255"><br><br>高阀值：<input type="text" placeholder="范围0~255">&nbsp低阀值：<input type="text" placeholder="范围0~255"><br>
+<br>
+请选择图片：<input type="file" id="ima" onchange="run()">
+<br><canvas id="myCan">抱歉，您的浏览器还不支持canvas。</canvas>
+</body>
+</html>
